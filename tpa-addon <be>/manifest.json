@@ -1,0 +1,67 @@
+{
+    "format_version": 2,
+    "metadata": {
+        "authors": [
+            "LuCiferKun6582"
+        ]
+    },
+    "header": {
+        "name": "Factions TPA System",
+        "description": "A addon that adds a tpa system to our minecraft worlds.",
+        "uuid": "34cd5e7b-6ac2-4807-958c-c1e986a66820",
+        "version": [
+            1,
+            0,
+            0
+        ],
+        "min_engine_version": [
+            1,
+            19,
+            50
+        ]
+    },
+    "modules": [
+        {
+            "description": "data",
+            "uuid": "bdc659df-66f1-4e65-ac65-d81e5941a1fb",
+            "version": [
+                1,
+                0,
+                0
+            ]
+        },
+        {
+            "type": "script",
+            "language": "javascript",
+            "uuid": "acb5fc3d-b8f1-4715-934f-e49cdb03e8d6",
+            "entry": "",
+            "version": [
+                1,
+                0,
+                0
+            ]
+        }
+    ],
+    "dependencies": [
+        {
+            "uuid": "e84e0b36-bf6a-4551-ac77-6ecb81153313",
+            "version": [
+                1,
+                4,
+                0
+            ]
+        },
+        {
+            "module_name": "@minecraft/server",
+            "version": "1.1.0-beta"
+        },
+        {
+            "module_name": "@minecraft/server-gametest",
+            "version": "1.0.0-beta"
+        },
+        {
+            "module_name": "@minecraft/server-ui",
+            "version": "1.0.0-beta"
+        }
+    ]
+}
