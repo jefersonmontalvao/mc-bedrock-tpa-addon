@@ -3,7 +3,7 @@ import { world } from "@minecraft/server";
 import * as ui from "@minecraft/server-ui"
 
 // Internal Modules
-import { firstCase, secondCase, thirdCase, fourthCase, fifthCase, sixthCase, seventhCase } from '../config/conf.cases.js'
+import { PlayerHasTag, RunMCCommand, RunMCCommandEntity } from '../components/utils.js'
 import { CreditsMessage } from '../config/conf.credits.js'
 import { InexistentCommand } from '../config/conf.debug.js'
 import { ChooseTargetPlayerMessage, GoOrComeToggleButtom, UiTittle, BodyTittle, RequestToGoToTargetLocation, RequestToTakeYouToRequesterLocation, AcceptOrDenyButtom, CanceledRequestAdvice, NewRequestAdvice, TeleportDoneCorreclyAdvice } from '../config/conf.ui_texts.js'
@@ -11,17 +11,18 @@ import { CommandPrefix } from '../config/config.prefix.js'
 import { WelcomeMessage } from '../config/config.welcome_msg.js'
 
 
+// Tpa by user interface
 function TpaUI(player) {
     // Do Advices to the chat about the TPUI
-    const DoUiChatAdvice = function(player, message) { 
+    const DoChatAdviceFromUI = function (player, message) {
         if (typeof player != typeof "string") {
             player = player.name
         }
-        let formatedMessage = message.toString().replaceAll('\"',"''").replaceAll('\\',"/")
+        let formatedMessage = message.toString().replaceAll('\"', "''").replaceAll('\\', "/")
         world.getDimension('overworld').runCommandAsync(`tellraw "${player}" {"rawtext":[{"text":"${formatedMessage}"}]}`)
     }
     // Run a command at overworld
-    const Cmd = function(command) {
+    const RunCommandAtOverworld = function (command) {
         return world.getDimension('overworld').runCommandAsync(command).statusMessage
     }
 
@@ -60,25 +61,74 @@ function TpaUI(player) {
         subUiForm.buttonOpt2(AcceptOrDenyButtom[0]["no"])
 
         // Advice about new tp request
-        DoUiChatAdvice(player, `${NewRequestAdvice}${targetResponseObject.name}`)
+        DoChatAdviceFromUI(player, `${NewRequestAdvice}${targetResponseObject.name}`)
 
         //
         subUiForm.show(targetResponseObject).then(response => {
-            if (response.selection != 1) return DoUiChatAdvice(player, `${CanceledRequestAdvice}`)
-            DoUiChatAdvice(player, `${TeleportDoneCorreclyAdvice}`)
+            if (response.selection != 1) return DoChatAdviceFromUI(player, `${CanceledRequestAdvice}`)
+            DoChatAdviceFromUI(player, `${TeleportDoneCorreclyAdvice}`)
 
             // Do teleport
             if (targetResponseValue) {
-                Cmd(`tp "${targetResponseObject.name}" "${player.name}"`)
-                Cmd(`playsound mob.endermen.portal "${player.name}"`)
-                Cmd(`playsound mob.endermen.portal "${targetResponseObject.name}"`)
+                RunCommandAtOverworld(`tp "${targetResponseObject.name}" "${player.name}"`)
+                RunCommandAtOverworld(`playsound mob.endermen.portal "${player.name}"`)
+                RunCommandAtOverworld(`playsound mob.endermen.portal "${targetResponseObject.name}"`)
             } else {
-                Cmd(`tp "${player.name}" "${targetResponseObject.name}"`)
-                Cmd(`playsound mob.endermen.portal "${player.name}"`)
-                Cmd(`playsound mob.endermen.portal "${targetResponseObject.name}"`)
+                RunCommandAtOverworld(`tp "${player.name}" "${targetResponseObject.name}"`)
+                RunCommandAtOverworld(`playsound mob.endermen.portal "${player.name}"`)
+                RunCommandAtOverworld(`playsound mob.endermen.portal "${targetResponseObject.name}"`)
             }
         })
     })
 }
 
-export { TpaUI }
+// Tpa by chat
+function TpaCommandLine(chatData) {
+    space = ' '
+    caseNullStringPlayerName = chatData.sender.name ?? chatData.sender.nameTag
+
+    function getCommandTargetByCommandLine() {
+        let msg = chatData.message
+        let cmd = chatData.command
+        let target = msg.slice(CommandPrefix.length).replace(cmd, '').trim().replaceAll('"', '')
+        return target
+    }
+
+    switch (chatData.command) {
+        case 'tpa':
+            let target = getCommandTargetByCommandLine()
+            break
+        case 'accept':
+            break
+        case 'cancel':
+            break
+        case 'tpaui':
+            break
+        case 'help':
+        case 'h':
+            break
+        default:
+
+    }
+
+}
+
+// TpaCommandLine is executed by this function
+function TpaCommandLineFunctionInit() {
+    world.events.beforeChat.subscribe(chatMessage => {
+        if (chatMessage.message.startsWith(CommandPrefix)) {
+            let sender = chatMessage.sender
+            let message = chatMessage.message
+            let command = message.slice(CommandPrefix.length).trim().split(' ').shift().toLowerCase()
+
+            chatMessage.cancel = true // Do not broadcast the message
+
+            TpaCommandLine({ "sender": player, "message": message, "command": command })
+        }
+    })
+}
+
+
+
+
+export { TpaUI, TpaCommandLineFunctionInit }

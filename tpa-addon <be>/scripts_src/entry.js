@@ -3,4 +3,6 @@ import { world, system } from '@minecraft/server'
 
 // Internal Modules
 import { PlayerHasTag, RunMCCommand, RunMCCommandEntity} from './components/utils.js'
-import { TpaUI } from './components/handler.js'
+import { TpaUI, TpaCommandLineFunctionInit } from './components/handler.js'
+
+TpaCommandLineFunctionInit()
