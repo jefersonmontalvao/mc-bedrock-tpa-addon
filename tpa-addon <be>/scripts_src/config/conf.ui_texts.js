@@ -5,7 +5,7 @@ const UiTittle = "§8§lTPA§r"
 const BodyTittle = "§7§lTPA : §r"
 const RequestToTakeYouToRequesterLocation = "quer teleportar você para sua localização"
 const RequestToGoToTargetLocation = "quer se teleportar para a sua localização"
-const AcceptOrDenyButtom = [{"yes": "Sim"}, {"no": "Não"}]
+const AcceptOrDenyButtom = {yes: "Sim", no: "Não"}
 
 // UI Chat Advice
 const NewRequestAdvice = "[§dTPA System§r] : Você enviou uma solicitaçãou para "

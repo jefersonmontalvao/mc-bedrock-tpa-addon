@@ -7,6 +7,7 @@ import { PlayerHasTag, RunMCCommand, RunMCCommandEntity } from '../components/ut
 import { CreditsMessage } from '../config/conf.credits.js'
 import { InexistentCommand } from '../config/conf.debug.js'
 import { ChooseTargetPlayerMessage, GoOrComeToggleButtom, UiTittle, BodyTittle, RequestToGoToTargetLocation, RequestToTakeYouToRequesterLocation, AcceptOrDenyButtom, CanceledRequestAdvice, NewRequestAdvice, TeleportDoneCorreclyAdvice } from '../config/conf.ui_texts.js'
+import { selector, cmdSelector, chatTag, separator, tpa_texts, tpaccept_texts, tpahelp_texts, tpahere_texts, tpcancel_texts } from '../config/conf.command_line_texts.js'
 import { CommandPrefix } from '../config/config.prefix.js'
 import { WelcomeMessage } from '../config/config.welcome_msg.js'
 
@@ -57,8 +58,8 @@ function TpaUI(player) {
             subUiForm.body(`${BodyTittle}${player.name}${RequestToGoToTargetLocation}`)
         }
         // Yes or No UI Buttom
-        subUiForm.buttonOpt1(AcceptOrDenyButtom[0]["yes"])
-        subUiForm.buttonOpt2(AcceptOrDenyButtom[0]["no"])
+        subUiForm.buttonOpt1(AcceptOrDenyButtom["yes"])
+        subUiForm.buttonOpt2(AcceptOrDenyButtom["no"])
 
         // Advice about new tp request
         DoChatAdviceFromUI(player, `${NewRequestAdvice}${targetResponseObject.name}`)
@@ -84,9 +85,10 @@ function TpaUI(player) {
 
 // Tpa by chat
 function TpaCommandLine(chatData) {
-    space = ' '
-    caseNullStringPlayerName = chatData.sender.name ?? chatData.sender.nameTag
+    let space = ' '
+    let caseNullStringPlayerName = chatData.sender.name ?? chatData.sender.nameTag
 
+    // Returns the command target
     function getCommandTargetByCommandLine() {
         let msg = chatData.message
         let cmd = chatData.command
@@ -94,16 +96,43 @@ function TpaCommandLine(chatData) {
         return target
     }
 
+    function formatConfText(text) {
+        let formated_text = `${chatTag}${separator}${text}`
+
+        // Selectors Format
+        formated_text = text.replaceAll(selector.requester, caseNullStringPlayerName)
+        try {
+            formated_text = formated_text.replaceAll(selector.target, getCommandTargetByCommandLine())
+        } catch (err) {
+            console.log(err)
+        }
+        formated_text = formated_text.replaceAll(cmdSelector.tpa, `${CommandPrefix}tpa`)
+        formated_text = formated_text.replaceAll(cmdSelector.tpaccept, `${CommandPrefix}tpaccept`)
+        formated_text = formated_text.replaceAll(cmdSelector.tpcancel, `${CommandPrefix}cancel`)
+        formated_text = formated_text.replaceAll(cmdSelector.tpahere, `${CommandPrefix}tpahere`)
+        formated_text = formated_text.replaceAll(cmdSelector.tpaui, `${CommandPrefix}tpaui`)
+        formated_text = formated_text.replaceAll(cmdSelector.typedcmd, `${CommandPrefix}${chatData.command}`)
+    }
+
     switch (chatData.command) {
         case 'tpa':
             let target = getCommandTargetByCommandLine()
+            RunMCCommandEntity(`playsound random.levelup "${target}`, chatData.sender)
+            RunMCCommand(`playsound random.levelup "${caseNullStringPlayerName}"`)
+            RunMCCommand(`tag "${target}" add pt2`)
+            RunMCCommand(`tag "${caseNullStringPlayerName}" add pt1`)
+            RunMCCommand(`tellraw "${target}" {"rawtext":[{"text":"${formatConfText(tpa_texts.request_send)}"}]}`)
+            RunMCCommand(`tellraw "${caseNullStringPlayerName}" {"rawtext":[{"text":"${formatConfText(tpa_texts.request_receive)}"}]}`)
             break
-        case 'accept':
+        case 'tpahere':
             break
-        case 'cancel':
+        case 'tpaccept':
+            break
+        case 'tpacancel':
             break
         case 'tpaui':
             break
+        case 'tpahelp':
         case 'help':
         case 'h':
             break
@@ -123,7 +152,7 @@ function TpaCommandLineFunctionInit() {
 
             chatMessage.cancel = true // Do not broadcast the message
 
-            TpaCommandLine({ "sender": player, "message": message, "command": command })
+            TpaCommandLine({ "sender": sender, "message": message, "command": command })
         }
     })
 }
