@@ -3,11 +3,12 @@ import { world } from "@minecraft/server";
 import * as ui from "@minecraft/server-ui"
 
 // Internal Modules
-import { PlayerHasTag, RunMCCommand, RunMCCommandEntity } from '../components/utils.js'
+import { PlayerHasTag, RunMCCommand, RunMCCommandEntity } from './utils.js'
 import { CreditsMessage } from '../config/conf.credits.js'
 import { InexistentCommand } from '../config/conf.debug.js'
 import { ChooseTargetPlayerMessage, GoOrComeToggleButtom, UiTittle, BodyTittle, RequestToGoToTargetLocation, RequestToTakeYouToRequesterLocation, AcceptOrDenyButtom, CanceledRequestAdvice, NewRequestAdvice, TeleportDoneCorreclyAdvice } from '../config/conf.ui_texts.js'
 import { selector, cmdSelector, chatTag, separator, tpa_texts, tpaccept_texts, tpahelp_texts, tpahere_texts, tpcancel_texts } from '../config/conf.command_line_texts.js'
+
 import { CommandPrefix } from '../config/config.prefix.js'
 import { WelcomeMessage } from '../config/config.welcome_msg.js'
 
@@ -85,8 +86,28 @@ function TpaUI(player) {
 
 // Tpa by chat
 function TpaCommandLine(chatData) {
-    let space = ' '
+    const players_list = []
+
+    for (let player of world.getPlayers()) {
+        players_list.push(player.name)
+    }
+
     let caseNullStringPlayerName = chatData.sender.name ?? chatData.sender.nameTag
+
+    // Returns true if player is online else, false
+    function checkOnlinePlayer(player) {
+        function isInList(p) {
+            return p === player
+        }
+
+        let result = players_list.find(isInList)
+
+        if (result === undefined) {
+            return false
+        } else {
+            return true
+        }
+    }
 
     // Returns the command target
     function getCommandTargetByCommandLine() {
@@ -97,7 +118,7 @@ function TpaCommandLine(chatData) {
     }
 
     function formatConfText(text) {
-        let formated_text = `${chatTag}${separator}${text}`
+        let formated_text = `${text}`
 
         // Selectors Format
         formated_text = text.replaceAll(selector.requester, caseNullStringPlayerName)
@@ -112,17 +133,28 @@ function TpaCommandLine(chatData) {
         formated_text = formated_text.replaceAll(cmdSelector.tpahere, `${CommandPrefix}tpahere`)
         formated_text = formated_text.replaceAll(cmdSelector.tpaui, `${CommandPrefix}tpaui`)
         formated_text = formated_text.replaceAll(cmdSelector.typedcmd, `${CommandPrefix}${chatData.command}`)
+        return `${chatTag}${separator}${formated_text}`
     }
 
     switch (chatData.command) {
         case 'tpa':
             let target = getCommandTargetByCommandLine()
-            RunMCCommandEntity(`playsound random.levelup "${target}`, chatData.sender)
-            RunMCCommand(`playsound random.levelup "${caseNullStringPlayerName}"`)
-            RunMCCommand(`tag "${target}" add pt2`)
-            RunMCCommand(`tag "${caseNullStringPlayerName}" add pt1`)
-            RunMCCommand(`tellraw "${target}" {"rawtext":[{"text":"${formatConfText(tpa_texts.request_send)}"}]}`)
-            RunMCCommand(`tellraw "${caseNullStringPlayerName}" {"rawtext":[{"text":"${formatConfText(tpa_texts.request_receive)}"}]}`)
+
+            if (checkOnlinePlayer(target)) {
+                // Sounds
+                RunMCCommandEntity(`playsound random.levelup "${target}`, chatData.sender)
+                RunMCCommand(`playsound random.levelup "${caseNullStringPlayerName}"`)
+
+                // Mark Tags to players
+                RunMCCommand(`tag "${caseNullStringPlayerName}" add pt1`)
+                RunMCCommand(`tag "${target}" add pt2`)
+
+                // Do Advices
+                RunMCCommand(`tellraw "${caseNullStringPlayerName}" {"rawtext":[{"text":"${formatConfText(tpa_texts.request_send)}"}]}`)
+                RunMCCommand(`tellraw "${target}" {"rawtext":[{"text":"${formatConfText(tpa_texts.request_receive)}"}]}`)
+            } else {
+                RunMCCommand(`tellraw "${caseNullStringPlayerName}" {"rawtext":[{"text":"§cJogadores Online ${players_list}"}]}`)
+            }
             break
         case 'tpahere':
             break

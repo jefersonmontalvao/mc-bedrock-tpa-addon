@@ -1,3 +1,5 @@
+import { world } from "@minecraft/server";
+
 // Check if the player has the specified tag
 function PlayerHasTag(player, tag) {
     return player.hasTag(tag)
