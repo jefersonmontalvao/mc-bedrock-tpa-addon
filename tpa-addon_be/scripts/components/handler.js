@@ -3,14 +3,31 @@ import { world } from "@minecraft/server";
 import * as ui from "@minecraft/server-ui"
 
 // Internal Modules
+// Functions
 import { PlayerHasTag, RunMCCommand, RunMCCommandEntity } from './utils.js'
-import { CreditsMessage } from '../config/conf.credits.js'
-import { InexistentCommand } from '../config/conf.debug.js'
-import { ChooseTargetPlayerMessage, GoOrComeToggleButtom, UiTittle, BodyTittle, RequestToGoToTargetLocation, RequestToTakeYouToRequesterLocation, AcceptOrDenyButtom, CanceledRequestAdvice, NewRequestAdvice, TeleportDoneCorreclyAdvice } from '../config/conf.ui_texts.js'
-import { selector, cmdSelector, chatTag, separator, tpa_texts, tpaccept_texts, tpahelp_texts, tpahere_texts, tpcancel_texts } from '../config/conf.command_line_texts.js'
 
-import { CommandPrefix } from '../config/config.prefix.js'
+// Custom Texts
+import {
+    ChooseTargetPlayerMessage,
+    GoOrComeToggleButtom, UiTittle,
+    BodyTittle, RequestToGoToTargetLocation,
+    RequestToTakeYouToRequesterLocation,
+    AcceptOrDenyButtom, CanceledRequestAdvice,
+    NewRequestAdvice, TeleportDoneCorreclyAdvice
+} from '../config/conf.ui_texts.js'
+import {
+    selector, cmdSelector,
+    chatTag, separator,
+    tpa_texts, tpaccept_texts,
+    tpahelp_texts, tpahere_texts,
+    tpcancel_texts,
+    tpaui_texts
+} from '../config/conf.command_line_texts.js'
+import { InexistentCommandError, NotRequestedError, PlayerOfflineError } from '../config/conf.debug.js'
+
 import { WelcomeMessage } from '../config/config.welcome_msg.js'
+import { CommandPrefix } from '../config/config.prefix.js'
+import { CreditsMessage } from '../config/conf.credits.js'
 
 
 // Tpa by user interface
@@ -96,7 +113,7 @@ function TpaCommandLine(player_data) {
     let target = undefined
 
     // Returns true if player is online else, false
-    function checkOnlinePlayer(player) {
+    function isPlayerOnline(player) {
         function isInList(p) {
             return p === player
         }
@@ -111,7 +128,7 @@ function TpaCommandLine(player_data) {
     }
 
     // Returns the command target
-    function getCommandTargetByCommandLine() {
+    function getTarget() {
         let msg = player_data.message
         let cmd = player_data.command
         let target = msg.slice(CommandPrefix.length).replace(cmd, '').trim().replaceAll('"', '')
@@ -119,13 +136,13 @@ function TpaCommandLine(player_data) {
     }
 
     // returns a formated text for advices
-    function formatConfText(text) {
+    function formatConfText(text, show_chatTag=true) {
         let formated_text = `${text}`
 
         // Selectors Format
         formated_text = text.replaceAll(selector.requester, sender_name)
         try {
-            formated_text = formated_text.replaceAll(selector.target, getCommandTargetByCommandLine())
+            formated_text = formated_text.replaceAll(selector.target, getTarget())
         } catch (err) {
             console.log(err)
         }
@@ -135,14 +152,20 @@ function TpaCommandLine(player_data) {
         formated_text = formated_text.replaceAll(cmdSelector.tpahere, `${CommandPrefix}tpahere`)
         formated_text = formated_text.replaceAll(cmdSelector.tpaui, `${CommandPrefix}tpaui`)
         formated_text = formated_text.replaceAll(cmdSelector.typedcmd, `${CommandPrefix}${player_data.command}`)
-        return `${chatTag}${separator}${formated_text}`
+        if (show_chatTag) {
+            return `${chatTag}${separator}${formated_text}`
+        } else if (!show_chatTag) {
+            return formated_text
+        }
+        else {
+            throw 'formated text error'
+        }
     }
 
     switch (player_data.command) {
         case 'tpa':
-            target = getCommandTargetByCommandLine()
-
-            if (checkOnlinePlayer(target)) {
+            target = getTarget()
+            if (isPlayerOnline(target)) {
                 // Sounds
                 RunMCCommandEntity(`playsound random.levelup "${target}`, player_data.sender)
                 RunMCCommand(`playsound random.levelup "${sender_name}"`)
@@ -159,14 +182,14 @@ function TpaCommandLine(player_data) {
                 RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(tpa_texts.request_send)}"}]}`)
                 RunMCCommand(`tellraw "${target}" {"rawtext":[{"text":"${formatConfText(tpa_texts.request_receive)}"}]}`)
             } else {
-                // TODO Set exception message later
-                RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"§cJogadores Online ${players_list}"}]}`)
+                // exception block
+                RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(PlayerOfflineError, false)}"}]}`)
             }
             break
         case 'tpahere':
-            target = getCommandTargetByCommandLine()
+            target = getTarget()
 
-            if (checkOnlinePlayer(target)) {
+            if (isPlayerOnline(target)) {
                 // Sounds
                 RunMCCommandEntity(`playsound random.levelup "${target}`, player_data.sender)
                 RunMCCommand(`playsound random.levelup "${sender_name}"`)
@@ -183,8 +206,8 @@ function TpaCommandLine(player_data) {
                 RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(tpahere_texts.request_send)}"}]}`)
                 RunMCCommand(`tellraw "${target}" {"rawtext":[{"text":"${formatConfText(tpahere_texts.request_receive)}"}]}`)
             } else {
-                // TODO Set exception message later
-                RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"§cJogadores Online ${players_list}"}]}`)
+                // Exception Block
+                RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(PlayerOfflineError, false)}"}]}`)
             }
             break
         case 'tpaccept':
@@ -193,10 +216,7 @@ function TpaCommandLine(player_data) {
                 // Accept Advice
                 RunMCCommandEntity(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(tpaccept_texts.accept_advice)}"}]}`, player_data.sender)
 
-                // Sound
                 RunMCCommand(`playsound random.levelup "${sender_name}"`)
-
-                // Do teleport
                 RunMCCommand(`tp @a[tag=pt1] "${sender_name}"`)
 
                 // Clear tags
@@ -208,20 +228,17 @@ function TpaCommandLine(player_data) {
                 // When tpahere. Block
                 RunMCCommandEntity(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(tpaccept_texts.accept_advice)}"}]}`, player_data.sender)
 
-                // Sound
                 RunMCCommand(`playsound random.levelup "${sender_name}"`)
 
                 // Do teleport
                 RunMCCommand(`tp "${sender_name}" @a[tag=pt1]`)
 
-                // Clear tags
                 RunMCCommand('tag @a remove pt2')
                 RunMCCommand('tag @a remove pt1')
                 RunMCCommand('tag @a remove tpahere')
             } else {
                 // exception block
-                // TODO Change text
-                RunMCCommandEntity(`tellraw "${sender_name}" {"rawtext":[{"text":"TU Solicitou nada parceiro"}]}`, player_data.sender)
+                RunMCCommandEntity(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(NotRequestedError, false)}"}]}`, player_data.sender)
             }
             break
         case 'tpcancel':
@@ -248,22 +265,32 @@ function TpaCommandLine(player_data) {
                     RunMCCommand('tag @a remove tpahere')
                 }
             } else {
-                // exception block
-                throw('fds')
+                // Exception block
+                    RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(NotRequestedError, false)}"}]}`)
             }
 
             break
         case 'tpaui':
-            RunMCCommandEntity(`give @s clock`, player_data.sender)
-            RunMCCommand('playsound random.orb @s')
-            
+            RunMCCommandEntity(`tellraw @s[hasitem={item=clock}] { "rawtext": [ { "text": "${formatConfText(tpaui_texts.clock_usage)}" } ] }`, player_data.sender)
+            RunMCCommandEntity(`give @s[hasitem={item=clock, quantity=0}] clock`, player_data.sender)
+            RunMCCommandEntity('playsound random.orb @s', player_data.sender)
             break
         case 'tpahelp':
         case 'help':
         case 'h':
+            // Tellraw help texts
+            let formated_help_text = formatConfText(tpahelp_texts.title)
+            for (let text of tpahelp_texts.help_texts) {
+                formated_help_text += `\n${tpahelp_texts.content_before_help_texts}${text}`
+            }
+            RunMCCommandEntity(`tellraw @s { "rawtext": [ { "text": "${formated_help_text}" } ] }`, player_data.sender)
+
+            RunMCCommand(`playsound random.orb ${sender_name}`)
             break
         default:
-
+            // exception block
+            RunMCCommandEntity(`tellraw "${sender_name}" { "rawtext": [ { "text": "${formatConfText(InexistentCommandError, false)}" } ] }`, player_data.sender)
+            RunMCCommand(`playsound note.bass "${sender_name}"`)
     }
 
 }

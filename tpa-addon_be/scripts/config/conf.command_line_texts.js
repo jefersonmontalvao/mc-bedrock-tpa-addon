@@ -15,8 +15,7 @@ const tpahere_texts = {
 }
 
 const tpaccept_texts = {
-    accept_advice: `Tu Aceitou`,
-    teleport_advice: `tu vai ser teleportado`,
+    accept_advice: `Tu Aceitou`
 }
 
 const tpcancel_texts = {
@@ -24,13 +23,18 @@ const tpcancel_texts = {
     canceled_advice_totarget: `você cancelou a bag`
 }
 
+const tpaui_texts = {
+    clock_usage: "Segure e pressione utizando o relógio para ativar a interface de usuário do tpa"
+}
+
 const tpahelp_texts = {
-    title: `§f[§dTPA System§f] : §rComandos de Ajuda (${cmdSelector.tpahelp})`,
+    title: `Comandos de Ajuda (${cmdSelector.tpahelp})`,
+    content_before_help_texts: " ",
     help_texts: [
         `teste`,
         `test2`
     ]
 }
 
-export { selector, cmdSelector, chatTag, separator, tpa_texts, tpahere_texts, tpaccept_texts, tpcancel_texts,tpahelp_texts}
+export { selector, cmdSelector, chatTag, separator, tpa_texts, tpahere_texts, tpaccept_texts, tpcancel_texts,tpahelp_texts, tpaui_texts}
         
