@@ -85,14 +85,15 @@ function TpaUI(player) {
 }
 
 // Tpa by chat
-function TpaCommandLine(chatData) {
+function TpaCommandLine(player_data) {
     const players_list = []
 
     for (let player of world.getPlayers()) {
         players_list.push(player.name)
     }
 
-    let caseNullStringPlayerName = chatData.sender.name ?? chatData.sender.nameTag
+    let sender_name = player_data.sender.name ?? player_data.sender.nameTag
+    let target = undefined
 
     // Returns true if player is online else, false
     function checkOnlinePlayer(player) {
@@ -111,17 +112,18 @@ function TpaCommandLine(chatData) {
 
     // Returns the command target
     function getCommandTargetByCommandLine() {
-        let msg = chatData.message
-        let cmd = chatData.command
+        let msg = player_data.message
+        let cmd = player_data.command
         let target = msg.slice(CommandPrefix.length).replace(cmd, '').trim().replaceAll('"', '')
         return target
     }
 
+    // returns a formated text for advices
     function formatConfText(text) {
         let formated_text = `${text}`
 
         // Selectors Format
-        formated_text = text.replaceAll(selector.requester, caseNullStringPlayerName)
+        formated_text = text.replaceAll(selector.requester, sender_name)
         try {
             formated_text = formated_text.replaceAll(selector.target, getCommandTargetByCommandLine())
         } catch (err) {
@@ -132,35 +134,124 @@ function TpaCommandLine(chatData) {
         formated_text = formated_text.replaceAll(cmdSelector.tpcancel, `${CommandPrefix}cancel`)
         formated_text = formated_text.replaceAll(cmdSelector.tpahere, `${CommandPrefix}tpahere`)
         formated_text = formated_text.replaceAll(cmdSelector.tpaui, `${CommandPrefix}tpaui`)
-        formated_text = formated_text.replaceAll(cmdSelector.typedcmd, `${CommandPrefix}${chatData.command}`)
+        formated_text = formated_text.replaceAll(cmdSelector.typedcmd, `${CommandPrefix}${player_data.command}`)
         return `${chatTag}${separator}${formated_text}`
     }
 
-    switch (chatData.command) {
+    switch (player_data.command) {
         case 'tpa':
-            let target = getCommandTargetByCommandLine()
+            target = getCommandTargetByCommandLine()
 
             if (checkOnlinePlayer(target)) {
                 // Sounds
-                RunMCCommandEntity(`playsound random.levelup "${target}`, chatData.sender)
-                RunMCCommand(`playsound random.levelup "${caseNullStringPlayerName}"`)
+                RunMCCommandEntity(`playsound random.levelup "${target}`, player_data.sender)
+                RunMCCommand(`playsound random.levelup "${sender_name}"`)
 
                 // Mark Tags to players
-                RunMCCommand(`tag "${caseNullStringPlayerName}" add pt1`)
+                RunMCCommand(`tag "${sender_name}" add pt1`)
+                RunMCCommand(`tag "${sender_name}" add tpa`)
+
                 RunMCCommand(`tag "${target}" add pt2`)
+                RunMCCommand(`tag "${target}" add tpa`)
+
 
                 // Do Advices
-                RunMCCommand(`tellraw "${caseNullStringPlayerName}" {"rawtext":[{"text":"${formatConfText(tpa_texts.request_send)}"}]}`)
+                RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(tpa_texts.request_send)}"}]}`)
                 RunMCCommand(`tellraw "${target}" {"rawtext":[{"text":"${formatConfText(tpa_texts.request_receive)}"}]}`)
             } else {
-                RunMCCommand(`tellraw "${caseNullStringPlayerName}" {"rawtext":[{"text":"§cJogadores Online ${players_list}"}]}`)
+                // TODO Set exception message later
+                RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"§cJogadores Online ${players_list}"}]}`)
             }
             break
         case 'tpahere':
+            target = getCommandTargetByCommandLine()
+
+            if (checkOnlinePlayer(target)) {
+                // Sounds
+                RunMCCommandEntity(`playsound random.levelup "${target}`, player_data.sender)
+                RunMCCommand(`playsound random.levelup "${sender_name}"`)
+
+                // Mark Tags to players
+                RunMCCommand(`tag "${sender_name}" add pt1`)
+                RunMCCommand(`tag "${sender_name}" add tpahere`)
+
+                RunMCCommand(`tag "${target}" add pt2`)
+                RunMCCommand(`tag "${target}" add tpahere`)
+
+
+                // Do Advices
+                RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(tpahere_texts.request_send)}"}]}`)
+                RunMCCommand(`tellraw "${target}" {"rawtext":[{"text":"${formatConfText(tpahere_texts.request_receive)}"}]}`)
+            } else {
+                // TODO Set exception message later
+                RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"§cJogadores Online ${players_list}"}]}`)
+            }
             break
         case 'tpaccept':
+            if (PlayerHasTag(player_data.sender, "pt2") && PlayerHasTag(player_data.sender, "tpa")) {
+                // When just usual tpa. Block
+                // Accept Advice
+                RunMCCommandEntity(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(tpaccept_texts.accept_advice)}"}]}`, player_data.sender)
+
+                // Sound
+                RunMCCommand(`playsound random.levelup "${sender_name}"`)
+
+                // Do teleport
+                RunMCCommand(`tp @a[tag=pt1] "${sender_name}"`)
+
+                // Clear tags
+                RunMCCommand('tag @a remove pt2')
+                RunMCCommand('tag @a remove pt1')
+                RunMCCommand('tag @a remove tpa')
+
+            } else if (PlayerHasTag(player_data.sender, "pt2") && PlayerHasTag(player_data.sender, "tpahere")) {
+                // When tpahere. Block
+                RunMCCommandEntity(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(tpaccept_texts.accept_advice)}"}]}`, player_data.sender)
+
+                // Sound
+                RunMCCommand(`playsound random.levelup "${sender_name}"`)
+
+                // Do teleport
+                RunMCCommand(`tp "${sender_name}" @a[tag=pt1]`)
+
+                // Clear tags
+                RunMCCommand('tag @a remove pt2')
+                RunMCCommand('tag @a remove pt1')
+                RunMCCommand('tag @a remove tpahere')
+            } else {
+                // exception block
+                // TODO Change text
+                RunMCCommandEntity(`tellraw "${sender_name}" {"rawtext":[{"text":"TU Solicitou nada parceiro"}]}`, player_data.sender)
+            }
             break
         case 'tpacancel':
+            if (PlayerHasTag(player_data.sender, "pt1") || PlayerHasTag(player_data.sender, "pt2")) {
+                if (PlayerHasTag(player_data.sender, "pt1") && PlayerHasTag(player_data.sender, "tpa")) {
+                    // Case usual tpa
+                    RunMCCommand(`tellraw @a[tag=tpa] {"rawtext":[{"text":"${formatConfText(tpcancel_texts.canceled_advice_torequester)}"}]}`)
+
+                    RunMCCommand(`playsound random.levelup @a[tag=pt1, tag=tpa]`)
+                    RunMCCommand(`playsound random.levelup @a[tag=pt2, tag=tpa]`)
+
+                    RunMCCommand('tag @a[tag=tpa] remove pt1')
+                    RunMCCommand('tag @a[tag=tpa] remove pt2')
+                    RunMCCommand('tag @a remove tpa')
+                } else if (PlayerHasTag(player_data.sender, "pt2") && PlayerHasTag(player_data.sender, "tpahere")) {
+                    // Case tpahere
+                    RunMCCommand(`tellraw @a[tag=tpahere] {"rawtext":[{"text":"${formatConfText(tpcancel_texts.canceled_advice_torequester)}"}]}`)
+
+                    RunMCCommand(`playsound random.levelup @a[tag=pt1, tag=tpahere]`)
+                    RunMCCommand(`playsound random.levelup @a[tag=pt2, tag=tpahere]`)
+
+                    RunMCCommand('tag @a[tag=tpahere] remove pt1')
+                    RunMCCommand('tag @a[tag=tpahere] remove pt2')
+                    RunMCCommand('tag @a remove tpahere')
+                }
+            } else {
+                // exception block
+                console.log('fds')
+            }
+
             break
         case 'tpaui':
             break
@@ -188,8 +279,6 @@ function TpaCommandLineFunctionInit() {
         }
     })
 }
-
-
 
 
 export { TpaUI, TpaCommandLineFunctionInit }
