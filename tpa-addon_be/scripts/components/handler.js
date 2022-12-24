@@ -224,7 +224,7 @@ function TpaCommandLine(player_data) {
                 RunMCCommandEntity(`tellraw "${sender_name}" {"rawtext":[{"text":"TU Solicitou nada parceiro"}]}`, player_data.sender)
             }
             break
-        case 'tpacancel':
+        case 'tpcancel':
             if (PlayerHasTag(player_data.sender, "pt1") || PlayerHasTag(player_data.sender, "pt2")) {
                 if (PlayerHasTag(player_data.sender, "pt1") && PlayerHasTag(player_data.sender, "tpa")) {
                     // Case usual tpa
@@ -249,11 +249,14 @@ function TpaCommandLine(player_data) {
                 }
             } else {
                 // exception block
-                console.log('fds')
+                throw('fds')
             }
 
             break
         case 'tpaui':
+            RunMCCommandEntity(`give @s clock`, player_data.sender)
+            RunMCCommand('playsound random.orb @s')
+            
             break
         case 'tpahelp':
         case 'help':
