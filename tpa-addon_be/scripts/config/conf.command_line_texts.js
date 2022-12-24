@@ -1,26 +1,26 @@
 const selector = {requester: "@r", target: "@t"}
-const cmdSelector = {tpa: "$tpa", tpaccept: "$tpaccept", tpcancel: "$tpcancel", tpahere: "$tpahere", tpahelp: "$tpahelp", tpaui: "$tpaui",typedcmd: "$typedcmd"}
+const cmdSelector = {tpa: "$tpa", tpaccept: "$tpaccept", tpcancel: "$tpcancel", tpahere: "$tpahere", tpahelp: "$tpahelp", tpaui: "$tpaui", typedcmd: "$typedcmd"}
 
-const chatTag = "[§dTpa System§r]"
+const chatTag = "[§8Tpa System§r]"
 const separator = ' : '
 
 const tpa_texts = {
-    request_send: `Você acabou de enviar uma solicitação de teleporte para ${selector.target}`,
-    request_receive: `Você, acaba de receber uma solicitação de teleporte de ${selector.requester}. Use ${cmdSelector.tpaccept} para aceitar, ou ${cmdSelector.tpcancel} para recusar`
+    request_send: `Você enviou uma solicitação de teleporte para ${selector.target}`,
+    request_receive: `Você recebeu uma solicitação de teleporte de ${selector.requester}. Use ${cmdSelector.tpaccept} para aceitar, ou ${cmdSelector.tpcancel} para recusar`
 }
 
 const tpahere_texts = {
     request_send: `Você enviou uma solicitação de teleporte para sua localização para ${selector.target}`,
-    request_receive: `${selector.requester}§r quer teleportar você para sua localização. Use ${cmdSelector.tpaccept} para aceitar, ou ${cmdSelector.tpcancel} para recusar`
+    request_receive: `${selector.requester}§r te enviou uma solicitação de teleporte para a sua própria localização. Use ${cmdSelector.tpaccept} para aceitar, ou ${cmdSelector.tpcancel} para recusar`
 }
 
 const tpaccept_texts = {
-    accept_advice: `Tu Aceitou`
+    accept_advice: `Teleporte aceito`
 }
 
 const tpcancel_texts = {
-    canceled_advice_torequester: `sua solicitação foi cancelada cara`,
-    canceled_advice_totarget: `você cancelou a bag`
+    canceled_advice_torequester: `Sua solicitação de teleporte foi recusada`,
+    canceled_advice_totarget: `Você cancelou a solicitação de teleporte`
 }
 
 const tpaui_texts = {
@@ -29,10 +29,16 @@ const tpaui_texts = {
 
 const tpahelp_texts = {
     title: `Comandos de Ajuda (${cmdSelector.tpahelp})`,
-    content_before_help_texts: " ",
+    content_before_help_texts: " >> ",
     help_texts: [
-        `teste`,
-        `test2`
+        `§e${cmdSelector.tpa}§r -> Teleporta você até um jogador (Exemplo: §7!tpa <§8player§7>§r)`,
+        `§e${cmdSelector.tpahere}§r -> Teleporta um jogador até você (Exemplo: §7!tpa <§8player§7>§r)`,
+        `§e${cmdSelector.tpaccept}§r -> Aceita um pedido de teleporte (Exemplo: §7!tpaccept§r)`,
+        `§e${cmdSelector.tpcancel}§r -> Recusa um pedido de teleporte (Exemplo: §7!tpcancel§r)`,
+        `§e${cmdSelector.tpaui}§r -> Você recebe um relógio que é utilizado para acessar a interface gráfica (Exemplo: §7!tpaui§r)`,
+    ],
+    addittional_texts: [
+        'Nota: Se o nome do usuário alvo conter espaços, é necessário digitar o nome entre aspas (Exemplo: §7!tpa \\"MN TEN\\")'
     ]
 }
 

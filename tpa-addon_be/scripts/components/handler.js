@@ -23,7 +23,7 @@ import {
     tpcancel_texts,
     tpaui_texts
 } from '../config/conf.command_line_texts.js'
-import { InexistentCommandError, NotRequestedError, PlayerOfflineError } from '../config/conf.debug.js'
+import { CantExecuteInYourselfError, InexistentCommandError, NotRequestedError, PlayerOfflineError } from '../config/conf.debug.js'
 
 import { WelcomeMessage } from '../config/config.welcome_msg.js'
 import { CommandPrefix } from '../config/config.prefix.js'
@@ -148,7 +148,7 @@ function TpaCommandLine(player_data) {
         }
         formated_text = formated_text.replaceAll(cmdSelector.tpa, `${CommandPrefix}tpa`)
         formated_text = formated_text.replaceAll(cmdSelector.tpaccept, `${CommandPrefix}tpaccept`)
-        formated_text = formated_text.replaceAll(cmdSelector.tpcancel, `${CommandPrefix}cancel`)
+        formated_text = formated_text.replaceAll(cmdSelector.tpcancel, `${CommandPrefix}tpcancel`)
         formated_text = formated_text.replaceAll(cmdSelector.tpahere, `${CommandPrefix}tpahere`)
         formated_text = formated_text.replaceAll(cmdSelector.tpaui, `${CommandPrefix}tpaui`)
         formated_text = formated_text.replaceAll(cmdSelector.typedcmd, `${CommandPrefix}${player_data.command}`)
@@ -166,21 +166,26 @@ function TpaCommandLine(player_data) {
         case 'tpa':
             target = getTarget()
             if (isPlayerOnline(target)) {
-                // Sounds
-                RunMCCommandEntity(`playsound random.levelup "${target}`, player_data.sender)
-                RunMCCommand(`playsound random.levelup "${sender_name}"`)
-
-                // Mark Tags to players
-                RunMCCommand(`tag "${sender_name}" add pt1`)
-                RunMCCommand(`tag "${sender_name}" add tpa`)
-
-                RunMCCommand(`tag "${target}" add pt2`)
-                RunMCCommand(`tag "${target}" add tpa`)
-
-
-                // Do Advices
-                RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(tpa_texts.request_send)}"}]}`)
-                RunMCCommand(`tellraw "${target}" {"rawtext":[{"text":"${formatConfText(tpa_texts.request_receive)}"}]}`)
+                if (target ==! sender_name) {
+                    // Sounds
+                    RunMCCommandEntity(`playsound random.levelup "${target}`, player_data.sender)
+                    RunMCCommand(`playsound random.levelup "${sender_name}"`)
+    
+                    // Mark Tags to players
+                    RunMCCommand(`tag "${sender_name}" add pt1`)
+                    RunMCCommand(`tag "${sender_name}" add tpa`)
+    
+                    RunMCCommand(`tag "${target}" add pt2`)
+                    RunMCCommand(`tag "${target}" add tpa`)
+    
+    
+                    // Do Advices
+                    RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(tpa_texts.request_send)}"}]}`)
+                    RunMCCommand(`tellraw "${target}" {"rawtext":[{"text":"${formatConfText(tpa_texts.request_receive)}"}]}`)
+                } else {
+                    // exception block
+                    RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(CantExecuteInYourselfError, false)}"}]}`)
+                }
             } else {
                 // exception block
                 RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(PlayerOfflineError, false)}"}]}`)
@@ -190,21 +195,27 @@ function TpaCommandLine(player_data) {
             target = getTarget()
 
             if (isPlayerOnline(target)) {
-                // Sounds
-                RunMCCommandEntity(`playsound random.levelup "${target}`, player_data.sender)
-                RunMCCommand(`playsound random.levelup "${sender_name}"`)
+                if (target ==! sender_name) {
+                    // Sounds
+                    RunMCCommandEntity(`playsound random.levelup "${target}`, player_data.sender)
+                    RunMCCommand(`playsound random.levelup "${sender_name}"`)
 
-                // Mark Tags to players
-                RunMCCommand(`tag "${sender_name}" add pt1`)
-                RunMCCommand(`tag "${sender_name}" add tpahere`)
+                    // Mark Tags to players
+                    RunMCCommand(`tag "${sender_name}" add pt1`)
+                    RunMCCommand(`tag "${sender_name}" add tpahere`)
 
-                RunMCCommand(`tag "${target}" add pt2`)
-                RunMCCommand(`tag "${target}" add tpahere`)
+                    RunMCCommand(`tag "${target}" add pt2`)
+                    RunMCCommand(`tag "${target}" add tpahere`)
 
 
-                // Do Advices
-                RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(tpahere_texts.request_send)}"}]}`)
-                RunMCCommand(`tellraw "${target}" {"rawtext":[{"text":"${formatConfText(tpahere_texts.request_receive)}"}]}`)
+                    // Do Advices
+                    RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(tpahere_texts.request_send)}"}]}`)
+                    RunMCCommand(`tellraw "${target}" {"rawtext":[{"text":"${formatConfText(tpahere_texts.request_receive)}"}]}`)
+                } else {
+                    // exception block
+                    RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(CantExecuteInYourselfError, false)}"}]}`)
+                }
+                
             } else {
                 // Exception Block
                 RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(PlayerOfflineError, false)}"}]}`)
@@ -281,8 +292,13 @@ function TpaCommandLine(player_data) {
             // Tellraw help texts
             let formated_help_text = formatConfText(tpahelp_texts.title)
             for (let text of tpahelp_texts.help_texts) {
-                formated_help_text += `\n${tpahelp_texts.content_before_help_texts}${text}`
+                formated_help_text += `\n${tpahelp_texts.content_before_help_texts}${formatConfText(text, false)}`
             }
+            // Additional Information
+            for (let a_text of tpahelp_texts.addittional_texts) {
+                formated_help_text += `\n${formatConfText(a_text, false)}`
+            } 
+
             RunMCCommandEntity(`tellraw @s { "rawtext": [ { "text": "${formated_help_text}" } ] }`, player_data.sender)
 
             RunMCCommand(`playsound random.orb ${sender_name}`)
