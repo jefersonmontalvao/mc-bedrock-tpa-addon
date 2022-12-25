@@ -5,13 +5,13 @@ const chatTag = "[§8Tpa System§r]"
 const separator = ' : '
 
 const tpa_texts = {
-    request_send: `Você enviou uma solicitação de teleporte para ${selector.target}`,
-    request_receive: `Você recebeu uma solicitação de teleporte de ${selector.requester}. Use ${cmdSelector.tpaccept} para aceitar, ou ${cmdSelector.tpcancel} para recusar`
+    request_send: `Você enviou uma solicitação de teleporte para §7${selector.target}§r`,
+    request_receive: `Você recebeu uma solicitação de teleporte de §7${selector.requester}§r. Use ${cmdSelector.tpaccept} para aceitar, ou ${cmdSelector.tpcancel} para recusar`
 }
 
 const tpahere_texts = {
-    request_send: `Você enviou uma solicitação de teleporte para sua localização para ${selector.target}`,
-    request_receive: `${selector.requester}§r te enviou uma solicitação de teleporte para a sua própria localização. Use ${cmdSelector.tpaccept} para aceitar, ou ${cmdSelector.tpcancel} para recusar`
+    request_send: `Você enviou uma solicitação de teleporte para sua localização para §7${selector.target}§r`,
+    request_receive: `§7${selector.requester}§r te enviou uma solicitação de teleporte para a sua própria localização. Use ${cmdSelector.tpaccept} para aceitar, ou ${cmdSelector.tpcancel} para recusar`
 }
 
 const tpaccept_texts = {

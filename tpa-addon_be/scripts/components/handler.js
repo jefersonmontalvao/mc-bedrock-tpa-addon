@@ -51,9 +51,15 @@ function TpaUI(player) {
     let listOfPlayerObjects = [] // List of Player Objects 
 
     // Operation to save data to {listOfPlayerNames,listOfPlayerObjects}
-    for (let player of onlinePlayers) {
-        listOfPlayerNames.push(player.name)
-        listOfPlayerObjects.push(player)
+    for (let online_player of onlinePlayers) {
+        if (player.name !== online_player.name) {
+            listOfPlayerNames.push(online_player.name)
+            listOfPlayerObjects.push(online_player)
+        }
+    }
+    if (listOfPlayerNames.length === 0) {
+        RunMCCommand(`tellraw "${player.name}" {"rawtext": [{"text": "§cSistema Offline"}]}`)
+        throw "System Offline Error: You can't use, tpa in youself."
     }
 
     // UI Configuration
@@ -64,38 +70,40 @@ function TpaUI(player) {
     // Show Player Response UI
     uiForm.show(player).then(response => {
         let subUiForm = new ui.MessageFormData() // Sub Ui form to show the player response
-        let targetResponseObject = listOfPlayerObjects[response.formValues[0]] // Target Player Name
-        let targetResponseValue = response.formValues[1] // Target Player Response Value
+        let target_player_object = listOfPlayerObjects[response.formValues[0]] // form dropdown value
+        let isTpahere = response.formValues[1] // form toggle value
 
-        // Advices depending of target response
-        if (targetResponseValue) {
+        // UI form texts
+        if (isTpahere) {
             subUiForm.title(`${UiTittle}`)
             subUiForm.body(`${BodyTittle}${player.name}${RequestToTakeYouToRequesterLocation}`)
         } else {
             subUiForm.title(`${UiTittle}`)
             subUiForm.body(`${BodyTittle}${player.name}${RequestToGoToTargetLocation}`)
         }
+
         // Yes or No UI Buttom
-        subUiForm.buttonOpt1(AcceptOrDenyButtom["yes"])
-        subUiForm.buttonOpt2(AcceptOrDenyButtom["no"])
+        subUiForm.button1(AcceptOrDenyButtom.yes)
+        subUiForm.button2(AcceptOrDenyButtom.no)
 
         // Advice about new tp request
-        DoChatAdviceFromUI(player, `${NewRequestAdvice}${targetResponseObject.name}`)
-
-        //
-        subUiForm.show(targetResponseObject).then(response => {
-            if (response.selection != 1) return DoChatAdviceFromUI(player, `${CanceledRequestAdvice}`)
+        DoChatAdviceFromUI(player, `${NewRequestAdvice}${target_player_object.name}`)
+        
+        subUiForm.show(target_player_object).then(response => {
+            if (response.selection != 1) {
+                return DoChatAdviceFromUI(player, `${CanceledRequestAdvice}`)
+            }
             DoChatAdviceFromUI(player, `${TeleportDoneCorreclyAdvice}`)
 
             // Do teleport
-            if (targetResponseValue) {
-                RunCommandAtOverworld(`tp "${targetResponseObject.name}" "${player.name}"`)
+            if (isTpahere) {
+                RunCommandAtOverworld(`tp "${target_player_object.name}" "${player.name}"`)
                 RunCommandAtOverworld(`playsound mob.endermen.portal "${player.name}"`)
-                RunCommandAtOverworld(`playsound mob.endermen.portal "${targetResponseObject.name}"`)
+                RunCommandAtOverworld(`playsound mob.endermen.portal "${target_player_object.name}"`)
             } else {
-                RunCommandAtOverworld(`tp "${player.name}" "${targetResponseObject.name}"`)
+                RunCommandAtOverworld(`tp "${player.name}" "${target_player_object.name}"`)
                 RunCommandAtOverworld(`playsound mob.endermen.portal "${player.name}"`)
-                RunCommandAtOverworld(`playsound mob.endermen.portal "${targetResponseObject.name}"`)
+                RunCommandAtOverworld(`playsound mob.endermen.portal "${target_player_object.name}"`)
             }
         })
     })
@@ -115,7 +123,7 @@ function TpaCommandLine(player_data) {
     // Returns true if player is online else, false
     function isPlayerOnline(player) {
         function isInList(p) {
-            return p === player
+            return p.toLowerCase() === player.toLowerCase()
         }
 
         let result = players_list.find(isInList)
@@ -166,7 +174,7 @@ function TpaCommandLine(player_data) {
         case 'tpa':
             target = getTarget()
             if (isPlayerOnline(target)) {
-                if (target ==! sender_name) {
+                if (target.toLowerCase() !== sender_name.toLowerCase()) {
                     // Sounds
                     RunMCCommandEntity(`playsound random.levelup "${target}`, player_data.sender)
                     RunMCCommand(`playsound random.levelup "${sender_name}"`)
@@ -195,7 +203,7 @@ function TpaCommandLine(player_data) {
             target = getTarget()
 
             if (isPlayerOnline(target)) {
-                if (target ==! sender_name) {
+                if (target !== sender_name) {
                     // Sounds
                     RunMCCommandEntity(`playsound random.levelup "${target}`, player_data.sender)
                     RunMCCommand(`playsound random.levelup "${sender_name}"`)
@@ -214,11 +222,13 @@ function TpaCommandLine(player_data) {
                 } else {
                     // exception block
                     RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(CantExecuteInYourselfError, false)}"}]}`)
+                    RunMCCommand(`playsound note.bass "${sender_name}"`)
                 }
                 
             } else {
                 // Exception Block
                 RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(PlayerOfflineError, false)}"}]}`)
+                RunMCCommand(`playsound note.bass "${sender_name}"`)
             }
             break
         case 'tpaccept':
@@ -250,6 +260,7 @@ function TpaCommandLine(player_data) {
             } else {
                 // exception block
                 RunMCCommandEntity(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(NotRequestedError, false)}"}]}`, player_data.sender)
+                RunMCCommand(`playsound note.bass "${sender_name}"`)
             }
             break
         case 'tpcancel':
@@ -277,7 +288,8 @@ function TpaCommandLine(player_data) {
                 }
             } else {
                 // Exception block
-                    RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(NotRequestedError, false)}"}]}`)
+                RunMCCommand(`tellraw "${sender_name}" {"rawtext":[{"text":"${formatConfText(NotRequestedError, false)}"}]}`)
+                RunMCCommand(`playsound note.bass "${sender_name}"`)
             }
 
             break
@@ -326,5 +338,17 @@ function TpaCommandLineFunctionInit() {
     })
 }
 
+// TpaUI is executed by this function
+function TpaUiFunctionInit() {
+    world.events.beforeItemUse.subscribe(eventData => {
+        let item = eventData.item
+        let player = eventData.source
+        if (item.typeId == "minecraft:clock") {
+            TpaUI(player)
+        }
+    })
+}
 
-export { TpaUI, TpaCommandLineFunctionInit }
+
+
+export { TpaUiFunctionInit, TpaCommandLineFunctionInit }

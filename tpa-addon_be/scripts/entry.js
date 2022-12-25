@@ -2,6 +2,11 @@
 import { world, system } from '@minecraft/server'
 
 // Internal Modules
-import { TpaUI, TpaCommandLineFunctionInit } from './components/handler.js'
+import { TpaUiFunctionInit, TpaCommandLineFunctionInit } from './components/handler.js'
 
 TpaCommandLineFunctionInit()
+TpaUiFunctionInit()
+
+system.events.beforeWatchdogTerminate.subscribe(data => {
+    data.cancel = true
+  })
