@@ -2,7 +2,7 @@
 import { world, system } from '@minecraft/server'
 
 // Internal Modules
-import { TpaUiFunctionInit, TpaCommandLineFunctionInit } from './components/handler.js'
+import { TpaUiFunctionInit, TpaCommandLineFunctionInit, doWelcomeMessage, doAddonCredits } from './components/handler.js'
 
 TpaCommandLineFunctionInit()
 TpaUiFunctionInit()
@@ -10,3 +10,6 @@ TpaUiFunctionInit()
 system.events.beforeWatchdogTerminate.subscribe(data => {
     data.cancel = true
   })
+
+doWelcomeMessage()
+doAddonCredits()

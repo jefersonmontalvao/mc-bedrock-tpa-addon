@@ -1,5 +1,5 @@
 // API Modules
-import { world } from "@minecraft/server";
+import { world, system } from "@minecraft/server";
 import * as ui from "@minecraft/server-ui"
 
 // Internal Modules
@@ -76,10 +76,10 @@ function TpaUI(player) {
         // UI form texts
         if (isTpahere) {
             subUiForm.title(`${UiTittle}`)
-            subUiForm.body(`${BodyTittle}${player.name}${RequestToTakeYouToRequesterLocation}`)
+            subUiForm.body(`${BodyTittle}§7${player.name}§r ${RequestToTakeYouToRequesterLocation}`)
         } else {
             subUiForm.title(`${UiTittle}`)
-            subUiForm.body(`${BodyTittle}${player.name}${RequestToGoToTargetLocation}`)
+            subUiForm.body(`${BodyTittle}§7${player.name}§r ${RequestToGoToTargetLocation}`)
         }
 
         // Yes or No UI Buttom
@@ -294,8 +294,8 @@ function TpaCommandLine(player_data) {
 
             break
         case 'tpaui':
-            RunMCCommandEntity(`tellraw @s[hasitem={item=clock}] { "rawtext": [ { "text": "${formatConfText(tpaui_texts.clock_usage)}" } ] }`, player_data.sender)
             RunMCCommandEntity(`give @s[hasitem={item=clock, quantity=0}] clock`, player_data.sender)
+            RunMCCommandEntity(`tellraw @s[hasitem={item=clock}] { "rawtext": [ { "text": "${formatConfText(tpaui_texts.clock_usage)}" } ] }`, player_data.sender)
             RunMCCommandEntity('playsound random.orb @s', player_data.sender)
             break
         case 'tpahelp':
@@ -349,6 +349,22 @@ function TpaUiFunctionInit() {
     })
 }
 
+// Say Welcome Message
+function doWelcomeMessage() {
+    system.run(function tick() {
+        world.getDimension("overworld").runCommandAsync(`tellraw @a[tag=!__welcome__] {"rawtext":[{"text":"${WelcomeMessage}"}]}`)
+        world.getDimension("overworld").runCommandAsync(`tag @a[tag=!__welcome__] add __welcome__`)
+        system.run(tick)
+    })
+}
 
+// Say addon credits
+function doAddonCredits() {
+    system.run(function tick() {
+        world.getDimension("overworld").runCommandAsync(`tellraw @a[tag=!__credits__] {"rawtext":[{"text":"${CreditsMessage}"}]}`)
+        world.getDimension("overworld").runCommandAsync(`tag @a[tag=!__credits__] add __credits__`)
+        system.run(tick)
+    })
+}
 
-export { TpaUiFunctionInit, TpaCommandLineFunctionInit }
+export { TpaUiFunctionInit, TpaCommandLineFunctionInit, doWelcomeMessage, doAddonCredits }
